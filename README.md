@@ -2,7 +2,7 @@
 
 # 🚇 Metro Ticketing System
 
-**A role-based REST API for metro transit management and digital ticketing.**
+**A role-based metro operations dashboard and REST API for transit management and digital ticketing.**
 
 Manage stations, trains, routes, timetables, fares, smart cards, tickets and maintenance incidents, secured with HTTP Basic authentication and documented with live Swagger UI.
 
@@ -10,7 +10,7 @@ Manage stations, trains, routes, timetables, fares, smart cards, tickets and mai
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Flyway](https://img.shields.io/badge/Flyway-migrations-CC0200?logo=flyway&logoColor=white)](https://flywaydb.org/)
-[![OpenAPI](https://img.shields.io/badge/OpenAPI-3-85EA2D?logo=swagger&logoColor=black)](http://localhost:8080/swagger-ui/index.html)
+[![OpenAPI](https://img.shields.io/badge/OpenAPI-3-85EA2D?logo=swagger&logoColor=black)](http://localhost:8081/swagger-ui/index.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 </div>
@@ -19,7 +19,7 @@ Manage stations, trains, routes, timetables, fares, smart cards, tickets and mai
 
 ## 📌 Overview
 
-The Metro Ticketing System is a **backend REST API** (no frontend) that covers day-to-day metro operations:
+The Metro Ticketing System is a **Spring Boot application with a responsive web dashboard and REST API** for day-to-day metro operations:
 
 - **Passengers** book tickets, hold smart cards and check timetables.
 - **Ticket agents** issue tickets and top up cards at the counter.
@@ -51,6 +51,7 @@ HTTP Basic Auth -> Controller (business logic) -> Repository -> PostgreSQL
 | 💳 **Smart Cards** | Card issuance, balance tracking and top-ups |
 | 🛠️ **Maintenance** | Incident reporting for stations and trains with priority and resolution tracking |
 | 📖 **API Docs** | Swagger UI with Basic Auth support |
+| 🖥️ **Operations dashboard** | Responsive, role-aware interface for managing network data and running API operations |
 | 🗄️ **Database** | Flyway migrations (`V1`–`V6`) and demo data seeding |
 
 ---
@@ -74,8 +75,9 @@ HTTP Basic Auth -> Controller (business logic) -> Repository -> PostgreSQL
 ### Prerequisites
 
 - **JDK 21** — check with `java -version`
-- **PostgreSQL 15+** running on port `5432`
+- **Docker Compose** — to start PostgreSQL locally
 - **Maven is optional**; use the included wrapper
+- **Node.js 18+** — optional, for the end-to-end API test suite
 
 ### 1. Clone the repository
 
@@ -86,50 +88,58 @@ cd metro-app
 
 ### 2. Database
 
-The project is configured for a hosted Supabase PostgreSQL database by default. Flyway creates all tables on first startup.
+Start the local PostgreSQL database with Docker Compose:
 
-Set the database password before running the app (ask the project owner for it):
+```bash
+docker compose up -d postgres
+```
+
+The Compose service creates database `metro_db`, user `metro_user`, and uses the development password `metro_password` by default. These values match the application defaults. Flyway creates the schema on the first application startup. PostgreSQL stores its initialized data in a named volume, so changing `POSTGRES_*` later does not change the credentials of an already-created database.
+
+To customize the database credentials on a fresh database, set `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` before starting Compose, and set the matching `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` for the application. The Compose service maps host port `5433` to PostgreSQL's container port `5432` to avoid colliding with a local PostgreSQL installation. For example, in PowerShell:
 
 ```powershell
-# PowerShell
-$env:DB_PASSWORD = "your-supabase-database-password"
+$env:POSTGRES_DB = "metro_db"
+$env:POSTGRES_USER = "metro_user"
+$env:POSTGRES_PASSWORD = "your_local_password"
+$env:DB_URL = "jdbc:postgresql://localhost:5433/metro_db"
+$env:DB_USERNAME = "metro_user"
+$env:DB_PASSWORD = "your_local_password"
+docker compose up -d postgres
 ```
 
-```bash
-# Git Bash / Linux / macOS
-export DB_PASSWORD="your-supabase-database-password"
+The development password is intended for local use only; choose a strong password for any shared or deployed environment.
+
+If you changed the Compose password after the database was already initialized, update the existing PostgreSQL role without deleting the data volume:
+
+```powershell
+docker compose exec postgres psql -U metro_user -d metro_db -c "ALTER USER metro_user WITH PASSWORD 'metro_password';"
 ```
 
-Optional overrides:
+Replace `metro_password` in the command with the value used for `DB_PASSWORD`.
 
-- `DB_URL` — full JDBC URL
-- `DB_USERNAME` — database user
-
-To use a local PostgreSQL instead, create an empty database and set:
-
-```bash
-export DB_URL="jdbc:postgresql://localhost:5432/metro_db"
-export DB_USERNAME="postgres"
-export DB_PASSWORD="your-local-password"
-```
-
-Flyway will create the schema in whichever empty database you point it at.
-
-### 4. Start the application
+### 3. Start the application
 
 ```bash
 ./mvnw spring-boot:run          # Git Bash / Linux / macOS
 .\mvnw.cmd spring-boot:run      # PowerShell / CMD
 ```
 
-API: **http://localhost:8080**
-Swagger UI: **http://localhost:8080/swagger-ui/index.html**
+The app listens on port `8081` by default (`server.port` in `application.properties`).
+
+API: **http://localhost:8081**
+Operations dashboard: **http://localhost:8081/**
+Swagger UI: **http://localhost:8081/swagger-ui/index.html**
+
+Open the dashboard in a browser and sign in with one of the demo accounts below. Use the sidebar to manage network, service, and user records, or open **API explorer** to run any of the documented API operations. The dashboard and REST API share the same Spring Boot server and authentication.
 
 ---
 
 ## 🔐 Authentication
 
-The API uses **HTTP Basic authentication**. Send the database username (the `Contact` field) and password with every request.
+Sign in to the dashboard with your account's `Contact` value as the username and its password. The same credentials work in Swagger UI through its **Authorize** button and with HTTP Basic authentication on API requests.
+
+The dashboard checks credentials through `GET /api/auth/me`. Credentials stay in memory while the page is open; refresh the page and sign in again.
 
 ### Demo accounts
 
@@ -147,19 +157,21 @@ Register a new passenger with `POST /api/auth/passenger/register`, then use the 
 
 ### Swagger UI
 
-1. Open http://localhost:8080/swagger-ui/index.html
+1. Open http://localhost:8081/swagger-ui/index.html
 2. Click **Authorize**.
 3. Enter username and password (for example `admin` / `admin123`).
 4. Call any endpoint.
+
+To verify the credentials, call `GET /api/auth/me` after authorizing. It should return the signed-in user. If Swagger still rejects credentials that were previously entered, click **Logout** in the Authorize dialog and authorize again; Swagger UI persists Basic credentials between visits.
 
 ### cURL
 
 ```bash
 # Admin
-curl -u admin:admin123 http://localhost:8080/api/stations
+curl -u admin:admin123 http://localhost:8081/api/stations
 
 # Passenger
-curl -u priya:Passw0rd! http://localhost:8080/api/tickets/passenger/PASS-SEED1
+curl -u priya:Passw0rd! http://localhost:8081/api/tickets/passenger/PASS-SEED1
 ```
 
 Use an incognito window or restart the browser to switch users, because browsers cache Basic credentials.
@@ -170,8 +182,8 @@ Use an incognito window or restart the browser to switch users, because browsers
 
 | Resource | URL |
 | --- | --- |
-| Swagger UI | http://localhost:8080/swagger-ui/index.html |
-| OpenAPI JSON | http://localhost:8080/v3/api-docs |
+| Swagger UI | http://localhost:8081/swagger-ui/index.html |
+| OpenAPI JSON | http://localhost:8081/v3/api-docs |
 
 ### Main endpoints
 
@@ -188,10 +200,12 @@ Use an incognito window or restart the browser to switch users, because browsers
 | Payments | `/api/payments` |
 | Maintenance | `/api/maintenance` |
 
+`PATCH /{id}` partial-update operations are available for users, stations, trains, routes, schedules, fares, and maintenance issues. Omitted fields keep their current values. Swagger also lists the existing ticket-use, card-deactivation, card-top-up, and maintenance-resolution operations. Authentication is registration/current-user access, and payments are treated as immutable records.
+
 Example ticket request (passenger is taken from the authenticated user):
 
 ```bash
-curl -u priya:Passw0rd! -X POST http://localhost:8080/api/tickets \
+curl -u priya:Passw0rd! -X POST http://localhost:8081/api/tickets \
   -H "Content-Type: application/json" \
   -d '{"sourceStationId":"STN-VSV","destStationId":"STN-GHP","ticketType":"SINGLE"}'
 ```
@@ -200,7 +214,7 @@ Top-up uses a query parameter:
 
 ```bash
 curl -u priya:Passw0rd! -X POST \
-  "http://localhost:8080/api/cards/CARD-SEED1/topup?amount=100"
+  "http://localhost:8081/api/cards/CARD-SEED1/topup?amount=100"
 ```
 
 ---
@@ -246,9 +260,9 @@ metro-ticketing-app/
 
 | Property | Environment variable | Default |
 | --- | --- | --- |
-| `spring.datasource.url` | `DB_URL` | `jdbc:postgresql://localhost:5432/metro_db` |
-| `spring.datasource.username` | `DB_USERNAME` | `postgres` |
-| `spring.datasource.password` | `DB_PASSWORD` | `@Arjun1221` |
+| `spring.datasource.url` | `DB_URL` | `jdbc:postgresql://localhost:5433/metro_db` |
+| `spring.datasource.username` | `DB_USERNAME` | `metro_user` |
+| `spring.datasource.password` | `DB_PASSWORD` | `metro_password` |
 | `app.bootstrap.admin.contact` | `ADMIN_CONTACT` | `admin` |
 | `app.bootstrap.admin.password` | `ADMIN_PASSWORD` | `admin123` |
 | `app.bootstrap.admin.first-name` | `ADMIN_FIRST_NAME` | `System` |
@@ -274,14 +288,24 @@ Before deploying publicly:
 
 | Problem | Fix |
 | --- | --- |
-| `Connection refused` | PostgreSQL is not running or not on port `5432`. Check `DB_URL`. |
-| `password authentication failed` | `DB_PASSWORD` does not match your PostgreSQL user. |
-| `database "metro_db" does not exist` | Run `CREATE DATABASE metro_db;`. |
+| `Connection refused` | Start PostgreSQL with `docker compose up -d postgres` and check `DB_URL` (Compose maps it to port `5433`). |
+| `password authentication failed` | Ensure `DB_PASSWORD` matches the existing PostgreSQL user's password. Changing Compose `POSTGRES_PASSWORD` does not update an initialized database; use the password repair command in the Database section. |
+| `database "metro_db" does not exist` | Check `POSTGRES_DB` and `DB_URL`, then start the Compose service. |
 | `Unsupported class file major version` | Use JDK 21. Check `java -version` and `JAVA_HOME`. |
-| `401 Unauthorized` | Wrong username/password, or none supplied. Use `-u user:pass`. |
+| `401 Unauthorized` | Check that you are using port `8081`, the account's `Contact` as username, and its correct password. For Swagger, log out of any saved credentials and authorize again. |
 | `403 Forbidden` | The authenticated role is not allowed to call that endpoint. |
-| Port `8080` already in use | Run with `--server.port=9090`. |
+| Port `8081` already in use | Change `server.port` in `application.properties` or run with `--server.port=9090`. |
 | Browser keeps old credentials | Use an incognito window or clear the site's auth cache. |
+
+### End-to-end API tests
+
+Keep PostgreSQL and the application running, then run:
+
+```powershell
+node --test src\test\js\*.test.js
+```
+
+The tests verify dashboard access and authentication, ensure the API explorer covers every OpenAPI operation, and exercise station, ticket/payment, and maintenance workflows with temporary test data that is cleaned up afterward. Use `BASE_URL`, `ADMIN_CONTACT`, or `ADMIN_PASSWORD` environment variables if your local settings differ from the defaults.
 
 ---
 

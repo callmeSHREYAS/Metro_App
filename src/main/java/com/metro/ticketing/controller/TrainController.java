@@ -42,6 +42,33 @@ public class TrainController {
         return ResponseEntity.ok(trainRepository.save(train));
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Train> patchTrain(@PathVariable String id, @RequestBody Train request) {
+        Train train = trainRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Train not found"));
+        if (request.getTrainNumber() != null) {
+            if (request.getTrainNumber().isBlank()) {
+                throw new IllegalArgumentException("Train number cannot be blank");
+            }
+            train.setTrainNumber(request.getTrainNumber());
+        }
+        if (request.getCapacity() != null) {
+            train.setCapacity(request.getCapacity());
+        }
+        if (request.getTotalCoaches() != null) {
+            train.setTotalCoaches(request.getTotalCoaches());
+        }
+        if (request.getManufactureYear() != null) {
+            train.setManufactureYear(request.getManufactureYear());
+        }
+        if (request.getIsActive() != null) {
+            train.setIsActive(request.getIsActive());
+        }
+        return ResponseEntity.ok(trainRepository.save(train));
+    }
+
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<Train> getTrainById(@PathVariable String id) {

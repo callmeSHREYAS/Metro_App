@@ -8,7 +8,7 @@ Stack: Java 21, Spring Boot 4.1, Spring Web MVC, Spring Data JPA + Hibernate, Sp
 
 ## 1. The 30-second answer
 
-This is a **stateless REST API backend** with a deliberately simple flow:
+This is a **Spring Boot REST API with an integrated browser dashboard**. The dashboard is served by the same application, calls the existing API routes, and adapts its navigation to the signed-in user's role.
 
 ```
 Client (Swagger / curl / browser)
@@ -28,8 +28,9 @@ Security filter chain
 
 Entry point: `src/main/java/com/metro/ticketing/TicketingApplication.java` — `@SpringBootApplication` + `SpringApplication.run(...)`.
 
-Live API: `http://localhost:8080`
-Swagger: `http://localhost:8080/swagger-ui/index.html`
+Live API: `http://localhost:8081`
+Dashboard: `http://localhost:8081/`
+Swagger: `http://localhost:8081/swagger-ui/index.html`
 
 ---
 
@@ -67,6 +68,9 @@ src/main/java/com/metro/ticketing/
 
 src/main/resources/
 ├── application.properties           DB, JPA, admin bootstrap
+├── static/
+│   ├── index.html                    Responsive MetroFlow dashboard
+│   └── assets/                       Dashboard styles and API client
 └── db/migration/
     ├── V1__create_metro_ticketing_schema.sql
     ├── V2__prevent_duplicate_fare_station_pairs.sql
@@ -301,6 +305,8 @@ Why: the evaluator can demo immediately, and the second startup is idempotent.
 
 `OpenApiConfig` defines an HTTP Basic security scheme. SpringDoc scans controller annotations and generates `/v3/api-docs`; Swagger UI reads it and shows the **Authorize** button.
 
+The resource controllers for users, stations, trains, routes, schedules, fares, and maintenance issues support partial updates with `PATCH /{id}`. Fields omitted from the request remain unchanged. Ticket use, metro-card deactivation, and maintenance resolution are action-specific PATCH operations; card top-up remains a POST action. Auth registration and payment records are not generic update resources.
+
 ---
 
 ## 4. Why the "missing" folders are missing
@@ -472,7 +478,7 @@ That is the whole project in one day.
 
 1. Start PostgreSQL and run `./mvnw spring-boot:run`.
 2. Show `Tomcat started on port 8080`, `Flyway ... validated`, `DataSeeder ...`.
-3. Open `http://localhost:8080/swagger-ui/index.html`.
+3. Open `http://localhost:8081/swagger-ui/index.html`.
 4. Authorize as `admin` / `admin123`.
 5. `GET /api/stations` -> data; `POST /api/stations` -> 201.
 6. Re-authorize as `priya` / `Passw0rd!` in an incognito window.
@@ -493,13 +499,13 @@ That is the whole project in one day.
 ./mvnw clean package
 
 # Admin request
-curl -u admin:admin123 http://localhost:8080/api/stations
+curl -u admin:admin123 http://localhost:8081/api/stations
 
 # Passenger request
-curl -u priya:Passw0rd! http://localhost:8080/api/tickets/passenger/PASS-SEED1
+curl -u priya:Passw0rd! http://localhost:8081/api/tickets/passenger/PASS-SEED1
 
 # Register a passenger
-curl -X POST http://localhost:8080/api/auth/passenger/register \
+curl -X POST http://localhost:8081/api/auth/passenger/register \
   -H "Content-Type: application/json" \
   -d '{"firstName":"Test","lastName":"User","contact":"test1","password":"Passw0rd!"}'
 ```

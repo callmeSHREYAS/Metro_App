@@ -66,6 +66,40 @@ public class RouteController {
         return ResponseEntity.ok(loadRoute(id));
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Route> patchRoute(@PathVariable String id, @RequestBody Route request) {
+        Route route = routeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Route not found"));
+
+        if (request.getRouteName() != null && request.getRouteName().isBlank()) {
+            throw new IllegalArgumentException("Route name cannot be blank");
+        }
+        Route patch = new Route();
+        patch.setRouteName(request.getRouteName() != null ? request.getRouteName() : route.getRouteName());
+        patch.setTotalDistance(request.getTotalDistance() != null
+                ? request.getTotalDistance() : route.getTotalDistance());
+        patch.setEstimatedTime(request.getEstimatedTime() != null
+                ? request.getEstimatedTime() : route.getEstimatedTime());
+        patch.setLineColor(request.getLineColor() != null ? request.getLineColor() : route.getLineColor());
+        patch.setStartStationId(request.getStartStationId() != null
+                ? request.getStartStationId() : route.getStartStation().getStationId());
+        patch.setEndStationId(request.getEndStationId() != null
+                ? request.getEndStationId() : route.getEndStation().getStationId());
+
+        copyRouteFields(patch, route);
+        route.setUpdatedAt(LocalDateTime.now());
+        routeRepository.save(route);
+
+        if (request.getStationIds() != null) {
+            routeStationRepository.deleteByRoute_RouteId(id);
+            saveRouteStations(route, request.getStationIds());
+        }
+
+        return ResponseEntity.ok(loadRoute(id));
+    }
+
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<Route> getRouteById(@PathVariable String id) {

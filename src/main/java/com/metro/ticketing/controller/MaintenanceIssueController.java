@@ -75,6 +75,37 @@ public class MaintenanceIssueController {
         return ResponseEntity.ok(maintenanceIssueRepository.save(issue));
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MAINTENANCE_STAFF')")
+    @Transactional
+    public ResponseEntity<MaintenanceIssue> patchMaintenanceIssue(@PathVariable String id,
+                                                                   @RequestBody MaintenanceIssue request) {
+        MaintenanceIssue issue = maintenanceIssueRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Maintenance issue not found"));
+
+        if (request.getIssueType() != null) {
+            if (request.getIssueType().isBlank()) {
+                throw new IllegalArgumentException("Issue type cannot be blank");
+            }
+            issue.setIssueType(request.getIssueType());
+        }
+        if (request.getDescription() != null) {
+            if (request.getDescription().isBlank()) {
+                throw new IllegalArgumentException("Description cannot be blank");
+            }
+            issue.setDescription(request.getDescription());
+        }
+        if (request.getStatus() != null) {
+            issue.setStatus(request.getStatus());
+        }
+        if (request.getPriority() != null) {
+            issue.setPriority(request.getPriority());
+        }
+        applyRelations(request, issue);
+
+        return ResponseEntity.ok(maintenanceIssueRepository.save(issue));
+    }
+
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<MaintenanceIssue> getMaintenanceIssueById(@PathVariable String id) {

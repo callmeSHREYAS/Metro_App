@@ -86,6 +86,34 @@ public class FareController {
         return ResponseEntity.ok(fareRepository.save(fare));
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Fare> patchFare(@PathVariable String id, @RequestBody Fare request) {
+        Fare fare = fareRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Fare not found"));
+        String sourceStationId = request.getSourceStationId() != null
+                ? request.getSourceStationId() : fare.getSourceStation().getStationId();
+        String destStationId = request.getDestStationId() != null
+                ? request.getDestStationId() : fare.getDestStation().getStationId();
+
+        validateStationPair(sourceStationId, destStationId);
+        if (fareRepository.existsBySourceStation_StationIdAndDestStation_StationIdAndFareIdNot(
+                sourceStationId, destStationId, id)) {
+            throw new IllegalArgumentException("A fare for this station pair already exists");
+        }
+
+        Fare patch = new Fare();
+        patch.setSourceStationId(sourceStationId);
+        patch.setDestStationId(destStationId);
+        patch.setBaseFare(request.getBaseFare() != null ? request.getBaseFare() : fare.getBaseFare());
+        if (patch.getBaseFare().signum() <= 0) {
+            throw new IllegalArgumentException("Base fare must be greater than zero");
+        }
+        copyFareFields(patch, fare);
+        return ResponseEntity.ok(fareRepository.save(fare));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional

@@ -65,6 +65,43 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleRepository.save(schedule));
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Schedule> patchSchedule(@PathVariable String id, @RequestBody Schedule request) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Schedule not found"));
+
+        Schedule patch = new Schedule();
+        patch.setTrainId(request.getTrainId() != null
+                ? request.getTrainId() : schedule.getTrain().getTrainId());
+        patch.setRouteId(request.getRouteId() != null
+                ? request.getRouteId() : schedule.getRoute().getRouteId());
+        patch.setScheduledDeparture(request.getScheduledDeparture() != null
+                ? request.getScheduledDeparture() : schedule.getScheduledDeparture());
+        patch.setScheduledArrival(request.getScheduledArrival() != null
+                ? request.getScheduledArrival() : schedule.getScheduledArrival());
+        patch.setDayOfWeek(request.getDayOfWeek() != null ? request.getDayOfWeek() : schedule.getDayOfWeek());
+        patch.setValidFrom(request.getValidFrom() != null ? request.getValidFrom() : schedule.getValidFrom());
+        patch.setValidTo(request.getValidTo() != null ? request.getValidTo() : schedule.getValidTo());
+        patch.setIsActive(request.getIsActive() != null ? request.getIsActive() : schedule.getIsActive());
+
+        validateTimes(patch);
+        if (scheduleRepository.hasOverlappingSchedule(
+                patch.getTrainId(), patch.getScheduledDeparture(), patch.getScheduledArrival(), id)) {
+            throw new IllegalArgumentException("Train is already scheduled during this time period");
+        }
+
+        copyScheduleFields(patch, schedule);
+        if (request.getValidFrom() != null) {
+            schedule.setValidFrom(request.getValidFrom());
+        }
+        if (request.getValidTo() != null) {
+            schedule.setValidTo(request.getValidTo());
+        }
+        return ResponseEntity.ok(scheduleRepository.save(schedule));
+    }
+
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<Schedule> getScheduleById(@PathVariable String id) {

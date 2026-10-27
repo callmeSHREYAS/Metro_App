@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>MetroFlow | Network operations</title>
+    <link rel="stylesheet" href="/assets/app.css">
+    <script src="/assets/app.js" defer></script>
+</head>
+<body>
+<div id="login-screen" class="login-screen">
+    <div class="login-art">
+        <div class="brand brand-light"><span class="brand-mark">M</span><span>metro<span class="brand-accent">flow</span></span></div>
+        <div class="login-art-copy">
+            <span class="eyebrow">METRO NETWORK · OPERATIONS CENTER</span>
+            <h1>Every journey<br>starts <span>here.</span></h1>
+            <p>A clearer view of the network that moves your city.</p>
+        </div>
+        <div class="rail-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="login-art-foot"><span>NETWORK STATUS</span><span class="status-dot"></span><span>Ready for service</span></div>
+    </div>
+    <main class="login-panel">
+        <div class="login-panel-inner">
+            <span class="eyebrow">WELCOME ABOARD</span>
+            <h2>Sign in to your<br>workspace</h2>
+            <p class="muted">Use your Metro Ticketing account to continue.</p>
+            <form id="login-form" class="stack-form">
+                <label for="login-contact">Username <span>Account contact</span></label>
+                <input id="login-contact" name="contact" autocomplete="username" placeholder="e.g. admin" required>
+                <label for="login-password">Password</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+                <div id="login-error" class="form-error" role="alert"></div>
+                <button class="button button-primary button-wide" type="submit">Sign in <span aria-hidden="true">→</span></button>
+            </form>
+            <div class="demo-login">
+                <span>QUICK DEMO ACCESS</span>
+                <div class="demo-chips">
+                    <button type="button" data-demo="admin">Admin</button>
+                    <button type="button" data-demo="agent1">Ticket agent</button>
+                    <button type="button" data-demo="priya">Passenger</button>
+                </div>
+            </div>
+            <p class="login-register">New to the network? <button type="button" class="text-button" data-action="register">Create a passenger account</button></p>
+            <p class="login-foot">MetroFlow · City transit, in sync.</p>
+        </div>
+    </main>
+</div>
+
+<div id="application" class="application hidden">
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" href="#" data-page="dashboard" aria-label="MetroFlow home"><span class="brand-mark">M</span><span>metro<span class="brand-accent">flow</span></span></a>
+        <div class="workspace-tag"><span class="workspace-icon">⌁</span><div><strong>Operations</strong><small>Metro network</small></div><span class="chevron">⌄</span></div>
+        <nav id="main-navigation" class="navigation" aria-label="Main navigation"></nav>
+        <div class="sidebar-bottom">
+            <div class="service-card"><span class="service-orbit">✳</span><div><strong>All systems ready</strong><small>Network running smoothly</small></div><span class="status-dot"></span></div>
+            <button id="logout-button" class="profile-button" type="button">
+                <span id="user-avatar" class="avatar">M</span>
+                <span class="profile-copy"><strong id="user-display">Metro user</strong><small id="user-role">Network team</small></span>
+                <span class="profile-menu">···</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button id="mobile-menu" class="icon-button mobile-menu" type="button" aria-label="Open navigation">☰</button>
+            <div class="breadcrumbs"><span>MetroFlow</span><span class="crumb-separator">/</span><strong id="breadcrumb-current">Overview</strong></div>
+            <div class="topbar-actions">
+                <span id="today-label" class="today-label"></span>
+                <button id="refresh-button" class="icon-button refresh-button" type="button" aria-label="Refresh current page" title="Refresh">↻</button>
+                <span class="topbar-divider"></span>
+                <button id="topbar-profile" class="topbar-profile" type="button" aria-label="Sign out"><span id="topbar-avatar" class="avatar avatar-small">M</span><span id="topbar-name">User</span><span>⌄</span></button>
+            </div>
+        </header>
+        <section id="page-content" class="page-content" tabindex="-1"></section>
+    </main>
+</div>
+
+<dialog id="record-dialog" class="record-dialog">
+    <div id="record-dialog-content"></div>
+</dialog>
+<dialog id="api-result-dialog" class="record-dialog result-dialog">
+    <div id="api-result-content"></div>
+</dialog>
+<div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

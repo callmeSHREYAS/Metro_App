@@ -42,6 +42,39 @@ public class StationController {
         return ResponseEntity.ok(stationRepository.save(station));
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Station> patchStation(@PathVariable String id, @RequestBody Station request) {
+        Station station = stationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Station not found"));
+        if (request.getStationCode() != null) {
+            if (request.getStationCode().isBlank()) {
+                throw new IllegalArgumentException("Station code cannot be blank");
+            }
+            station.setStationCode(request.getStationCode());
+        }
+        if (request.getLatitude() != null) {
+            station.setLatitude(request.getLatitude());
+        }
+        if (request.getLongitude() != null) {
+            station.setLongitude(request.getLongitude());
+        }
+        if (request.getAddress() != null) {
+            station.setAddress(request.getAddress());
+        }
+        if (request.getOpenedDate() != null) {
+            station.setOpenedDate(request.getOpenedDate());
+        }
+        if (request.getLineColor() != null) {
+            station.setLineColor(request.getLineColor());
+        }
+        if (request.getIsActive() != null) {
+            station.setIsActive(request.getIsActive());
+        }
+        return ResponseEntity.ok(stationRepository.save(station));
+    }
+
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public ResponseEntity<Station> getStationById(@PathVariable String id) {

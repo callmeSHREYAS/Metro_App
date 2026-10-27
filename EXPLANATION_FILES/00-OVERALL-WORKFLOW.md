@@ -19,7 +19,7 @@ A **Metro Ticketing REST API** built with Spring Boot. It manages:
 - metro cards
 - maintenance issues
 
-There is no frontend. The API is tested through **Swagger UI**, `curl`, or any HTTP client.
+The application includes a responsive dashboard served by Spring Boot. The API can also be tested through **Swagger UI**, `curl`, or any HTTP client.
 
 The application is deliberately simple:
 
@@ -27,7 +27,7 @@ The application is deliberately simple:
 HTTP Basic Auth
    -> Controller (validation + business logic + transaction)
    -> Repository (Spring Data JPA)
-   -> PostgreSQL (Supabase)
+   -> PostgreSQL (Docker Compose for local development)
 ```
 
 No Lombok, no DTO layer, no service layer, no JWT.
@@ -42,7 +42,7 @@ No Lombok, no DTO layer, no service layer, no JWT.
 | Framework | Spring Boot 4.1 | Auto-configures the app |
 | Web | Spring Web MVC | REST controllers |
 | Database access | Spring Data JPA + Hibernate | Repositories and entity mapping |
-| Database | PostgreSQL (Supabase) | Stores all data |
+| Database | PostgreSQL | Stores all data |
 | Migrations | Flyway | Creates/updates tables |
 | Security | Spring Security HTTP Basic | Authentication and roles |
 | Password hashing | BCrypt | Hashes passwords |
@@ -545,12 +545,13 @@ or PowerShell:
 .\mvnw.cmd spring-boot:run
 ```
 
-Supabase is the default database. Environment variables `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` override `application.properties`.
+Docker Compose starts the local PostgreSQL database and maps it to host port `5433` to avoid conflicts with a locally installed PostgreSQL service on `5432`. The app defaults to `metro_db` with user `metro_user` and password `metro_password`; environment variables `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` override these settings. PostgreSQL keeps its data in a named Docker volume, and changing Compose `POSTGRES_*` values does not change credentials in an already-initialized volume.
 
 ### Swagger
 
 ```text
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8081/
+http://localhost:8081/swagger-ui/index.html
 ```
 
 ### Authorize
@@ -558,6 +559,7 @@ http://localhost:8080/swagger-ui/index.html
 1. Click **Authorize**.
 2. Username `admin`, password `admin123`.
 3. Try `GET /api/stations`.
+4. To check the authenticated account, call `GET /api/auth/me`.
 
 ### Test passenger rules
 
@@ -627,4 +629,4 @@ Use an incognito window, authorize as `priya` / `Passw0rd!`, then:
 
 ## 19. The one-paragraph answer
 
-> This is a Spring Boot REST API for metro ticketing. HTTP Basic authentication loads users from PostgreSQL through Spring Security. Requests go to controllers, which validate input, check roles with `@PreAuthorize`, enforce ownership, and run business logic inside `@Transactional`. Controllers use Spring Data JPA repositories to read and write entities. Entities are mapped to PostgreSQL tables and are also used as JSON bodies, with transient ID fields and read/write-only annotations for safety. Flyway creates the schema, Hibernate validates it, and a seeder loads demo data. Errors are converted to clean JSON by a global exception handler. Swagger documents and tests the whole API.
+> This is a Spring Boot metro-ticketing application with a browser dashboard and REST API. The dashboard uses the same HTTP Basic authentication as the API. Security loads users from PostgreSQL; requests go to controllers, which validate input, check roles with `@PreAuthorize`, enforce ownership, and run business logic inside `@Transactional`. Controllers use Spring Data JPA repositories to read and write entities. Entities are mapped to PostgreSQL tables and are also used as JSON bodies, with transient ID fields and read/write-only annotations for safety. Flyway creates the schema, Hibernate validates it, and a seeder loads demo data. Errors are converted to clean JSON by a global exception handler. Swagger documents and tests the API.

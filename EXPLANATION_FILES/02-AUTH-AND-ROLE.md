@@ -500,18 +500,22 @@ Encryption is reversible. Hashing is one-way. Even if the database leaks, the or
 
 ---
 
-## 12. Swagger testing
+## 12. Dashboard and Swagger testing
 
-1. Open `http://localhost:8080/swagger-ui/index.html`.
-2. Click **Authorize**.
-3. Enter:
+1. Open the dashboard at `http://localhost:8081/`.
+2. Sign in with username `admin` and password `admin123`.
+3. The dashboard verifies the account with `GET /api/auth/me` and shows the navigation available to that role.
+4. Alternatively, open `http://localhost:8081/swagger-ui/index.html` and authorize with the same credentials.
+
+1. In Swagger, click **Authorize**.
+2. Enter:
    - username `admin`
    - password `admin123`
-4. Call `GET /api/auth/me` -> returns admin.
-5. Call `POST /api/auth/employee/hire` -> succeeds.
-6. Click **Authorize** again and switch to `priya` / `Passw0rd!`.
-7. Call `GET /api/auth/me` -> returns Priya.
-8. Call `POST /api/auth/employee/hire` -> `403`.
+3. Call `GET /api/auth/me` -> returns admin.
+4. Call `POST /api/auth/employee/hire` -> succeeds.
+5. Click **Authorize** again and switch to `priya` / `Passw0rd!`.
+6. Call `GET /api/auth/me` -> returns Priya.
+7. Call `POST /api/auth/employee/hire` -> `403`.
 
 Browsers cache Basic credentials. If switching users does not work, use an incognito window.
 
@@ -521,18 +525,18 @@ Browsers cache Basic credentials. If switching users does not work, use an incog
 
 ```bash
 # Admin
-curl -u admin:admin123 http://localhost:8080/api/auth/me
+curl -u admin:admin123 http://localhost:8081/api/auth/me
 
 # Passenger
-curl -u priya:Passw0rd! http://localhost:8080/api/auth/me
+curl -u priya:Passw0rd! http://localhost:8081/api/auth/me
 
 # Register
-curl -X POST http://localhost:8080/api/auth/passenger/register \
+curl -X POST http://localhost:8081/api/auth/passenger/register \
   -H "Content-Type: application/json" \
   -d '{"firstName":"New","lastName":"User","contact":"newuser","password":"Passw0rd!"}'
 
 # Hire (admin only)
-curl -u admin:admin123 -X POST http://localhost:8080/api/auth/employee/hire \
+curl -u admin:admin123 -X POST http://localhost:8081/api/auth/employee/hire \
   -H "Content-Type: application/json" \
   -d '{"firstName":"New","lastName":"Agent","contact":"agent9","password":"Passw0rd!","role":"TICKET_AGENT","stationId":"STN-AND"}'
 ```
